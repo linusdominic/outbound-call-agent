@@ -35,7 +35,14 @@ def mcnemar(only_first: int, only_second: int) -> float:
 
 
 def frac(hits: int, total: int) -> str:
-    return f"{hits}/{total} ({100 * hits / total:.0f}%)" if total else "n/a"
+    if not total:
+        return "n/a"
+    share = 100 * hits / total
+    return (
+        f"{hits}/{total} ({share:.0f}%)"
+        if share == round(share)
+        else f"{hits}/{total} ({share:.1f}%)"
+    )
 
 
 @dataclass

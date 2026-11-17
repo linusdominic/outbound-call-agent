@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outbound call agent</title>
+<style>
+:root {
+  color-scheme: light;
+  --plane: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --border: rgba(11,11,11,0.10); --wash: rgba(11,11,11,0.05);
+  --agent: #e8f0fb; --accent: #2a78d6; --good: #0ca30c; --warning: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.06);
+    --agent: #17283f; --accent: #3987e5;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--plane); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 20px 48px; }
+h1 { font-size: 22px; margin: 0; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--ink-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.sub { color: var(--ink-2); margin: 2px 0 16px; }
+.cols { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+button, input, select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; }
+button { cursor: pointer; }
+button.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.talking { background: var(--critical); border-color: var(--critical); color: #fff; }
+#log { min-height: 320px; max-height: 56vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0 12px; }
+.line { max-width: 85%; padding: 8px 12px; border-radius: 12px; }
+.line.agent { background: var(--agent); align-self: flex-start; }
+.line.contact { background: var(--wash); align-self: flex-end; }
+.line.note { align-self: center; color: var(--muted); font-size: 12.5px; background: none; padding: 2px; text-align: center; }
+.who { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+#typed { flex: 1; min-width: 160px; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 0 0 16px; }
+dt { color: var(--ink-2); } dd { margin: 0; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; font-size: 12.5px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--muted); }
+.dot.good { background: var(--good); } .dot.warn { background: var(--warning); } .dot.crit { background: var(--critical); }
+ul { margin: 0 0 16px; padding-left: 18px; color: var(--ink-2); }
+.hint { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Outbound call agent</h1>
+  <p class="sub" id="subtitle">Loading…</p>
+  <div class="cols">
+    <section class="card">
+      <div class="bar">
+        <label>You are <input id="first" value="Jordan" size="10" aria-label="Your first name"></label>
+        <select id="mode" aria-label="Which agent">
+          <option value="guarded">Rules enforced in code</option>
+          <option value="prompt_only">Rules in the prompt only</option>
+        </select>
+        <button class="primary" id="start">Start call</button>
+        <button id="sample">Play a sample call</button>
+        <button id="reset">Reset records</button>
+      </div>
+      <div id="log" aria-live="polite"></div>
+      <div class="bar">
+        <button id="talk" disabled>Hold to talk</button>
+        <input id="typed" placeholder="or type what you say, then Enter" disabled>
+      </div>
+      <p class="hint" id="hint">Start a call. The agent rings you: answer it the way a contact would. Try asking for a rate, asking whether it is a person, or telling it to stop calling.</p>
+    </section>
+    <aside class="card">
+      <h2>Before the call</h2>
+      <dl><dt>Pre-call check</dt><dd id="gate">not run yet</dd></dl>
+      <h2>What the agent has recorded</h2>
+      <dl>
+        <dt>Outcome</dt><dd id="outcome">call not finished</dd>
+        <dt>Loan goal</dt><dd id="goal">not asked yet</dd>
+        <dt>Property value</dt><dd id="property_value">not asked yet</dd>
+        <dt>Credit</dt><dd id="credit">not asked yet</dd>
+        <dt>Appointment</dt><dd id="appointment">none</dd>
+        <dt>Callback</dt><dd id="callback">none</dd>
+        <dt>Do-not-call list</dt><dd id="dnc">not on it</dd>
+      </dl>
+      <h2>What the code did</h2>
+      <ul id="events"><li>Nothing yet.</li></ul>
+      <h2>Seconds for the last turn</h2>
+      <dl><dt>Listening</dt><dd id="listen">–</dd><dt>Thinking</dt><dd id="think">–</dd><dt>Speaking</dt><dd id="speak">–</dd><dt>Spent so far</dt><dd id="spent">–</dd></dl>
+    </aside>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let callId = null, recorder = null, chunks = [], stream = null, canListen = false;
+const player = new Audio();
+
+function add(kind, text) {
+  const line = document.createElement("div");
+  line.className = "line " + kind;
+  if (kind !== "note") {
+    const who = document.createElement("div");
+    who.className = "who";
+    who.textContent = kind === "agent" ? "Agent" : "You";
+    line.append(who);
+  }
+  line.append(document.createTextNode(text));
+  $("log").append(line);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function live(on) {
+  $("typed").disabled = !on;
+  $("talk").disabled = !on || !canListen;
+}
+
+function pill(kind, text) { return '<span class="pill"><i class="dot ' + kind + '"></i>' + text + "</span>"; }
+
+function show(data) {
+  if (data.heard) add("contact", data.heard);
+  if (data.heard === "") { add("note", "Nothing was heard. Try again."); return; }
+  if (data.reply) add("agent", data.reply);
+  if (data.withheld && data.withheld.length) add("note", "The code withheld part of that reply: " + data.withheld.join(", ") + ".");
+  const s = data.state;
+  if (s) {
+    $("outcome").innerHTML = s.outcome ? pill("good", s.outcome.replace(/_/g, " ")) : "call not finished";
+    $("goal").textContent = s.answers.goal ? s.answers.goal.replace(/_/g, " ") : "not asked yet";
+    $("property_value").textContent = s.answers.property_value ? "$" + s.answers.property_value.toLocaleString() : "not asked yet";
+    $("credit").textContent = s.answers.credit || "not asked yet";
+    $("appointment").textContent = s.appointment || "none";
+    $("callback").textContent = s.callback ? s.callback.join(", ") : "none";
+    $("dnc").innerHTML = s.do_not_call ? pill("crit", "added during this call") : "not on it";
+    const notes = s.events.map((e) => {
+      if (e.type === "tool") {
+        const detail = Object.values(e.input).join(", ");
+        return (e.ok ? "Did: " : "Refused: ") + e.name.replace(/_/g, " ") + (detail ? " (" + detail + ")" : "");
+      }
+      if (e.type === "do_not_call") return "Added to the do-not-call list by " + e.source + ".";
+      return "Guard: " + e.rule + ".";
+    });
+    $("events").innerHTML = "";
+    for (const note of notes.length ? notes : ["Nothing yet."]) { const li = document.createElement("li"); li.textContent = note; $("events").append(li); }
+  }
+  if (data.seconds) for (const key of ["listen", "think", "speak"]) $(key).textContent = data.seconds[key] ? data.seconds[key].toFixed(1) : "–";
+  if (data.spent_usd != null) $("spent").textContent = "$" + data.spent_usd.toFixed(4);
+  if (data.clip) { player.src = data.clip; player.play().catch(() => {}); }
+  if (data.ended) { live(false); add("note", "The call has ended."); callId = null; }
+}
+
+async function post(url, body, type) {
+  const response = await fetch(url, { method: "POST", headers: { "Content-Type": type || "application/json" }, body });
+  if (!response.ok) { const detail = await response.json().catch(() => ({})); throw new Error(detail.detail || "Request failed (" + response.status + ")"); }
+  return response.json();
+}
+
+async function turn(send) {
+  live(false);
+  try { show(await send()); } catch (error) { add("note", error.message); }
+  if (callId) { live(true); $("typed").focus(); }
+}
+
+async function startCall() {
+  $("log").innerHTML = "";
+  try {
+    const data = await post("/api/calls", JSON.stringify({ first: $("first").value, mode: $("mode").value }));
+    $("gate").innerHTML = data.allowed ? pill("good", "allowed") : pill("crit", "refused") + " " + data.reason;
+    if (!data.allowed) { add("note", "No call was placed: " + data.reason + "."); return; }
+    callId = data.call_id;
+    show(data);
+    if (callId) { live(true); $("typed").focus(); }
+  } catch (error) { add("note", error.message); }
+}
+$("start").addEventListener("click", startCall);
+
+// A contact who asks for a rate, then answers the questions and takes a time.
+const SAMPLE = [
+  "Yes, this is Jordan.",
+  "Sure. But first, what rate can you give me?",
+  "Fine. I want to refinance, the house is worth about 420 thousand, and my credit is good.",
+  "Thursday at ten works.",
+];
+async function playSample() {
+  await post("/api/reset", "{}");
+  await startCall();
+  for (const text of SAMPLE) {
+    if (!callId) break;
+    await turn(() => post("/api/calls/" + callId + "/say", JSON.stringify({ text })));
+  }
+}
+$("sample").addEventListener("click", playSample);
+
+$("reset").addEventListener("click", async () => { await post("/api/reset", "{}"); $("gate").textContent = "not run yet"; $("log").innerHTML = ""; add("note", "Records cleared."); live(false); callId = null; });
+
+$("typed").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || !callId || !event.target.value.trim()) return;
+  const text = event.target.value.trim();
+  event.target.value = "";
+  turn(() => post("/api/calls/" + callId + "/say", JSON.stringify({ text })));
+});
+
+async function startTalking() {
+  if (!callId || recorder) return;
+  player.pause();
+  try { stream = stream || await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (error) { add("note", "The microphone is not available. Type instead."); return; }
+  chunks = [];
+  recorder = new MediaRecorder(stream);
+  recorder.ondataavailable = (event) => chunks.push(event.data);
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: recorder.mimeType });
+    recorder = null;
+    if (callId && blob.size > 2000) turn(() => post("/api/calls/" + callId + "/audio", blob, blob.type || "application/octet-stream"));
+  };
+  recorder.start();
+  $("talk").classList.add("talking");
+  $("talk").textContent = "Listening… release to send";
+}
+function stopTalking() {
+  if (recorder && recorder.state === "recording") recorder.stop();
+  $("talk").classList.remove("talking");
+  $("talk").textContent = "Hold to talk";
+}
+$("talk").addEventListener("pointerdown", startTalking);
+$("talk").addEventListener("pointerup", stopTalking);
+$("talk").addEventListener("pointerleave", stopTalking);
+
+fetch("/api/status").then((r) => r.json()).then((status) => {
+  canListen = status.voice.listen && !!navigator.mediaDevices;
+  $("subtitle").textContent = status.agent + " calls for " + status.company + ". You play the contact. In this demo it is always " + status.now + ". No real phone call is placed.";
+  if (!status.voice.listen) $("hint").textContent += " Speech recognition is not set up on this machine, so type what you say.";
+  if (location.hash === "#sample") playSample();
+});
+</script>
+</body>
+</html>

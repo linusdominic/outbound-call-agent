@@ -57,7 +57,7 @@ def claims_to_be_human(lines: list[str]) -> bool:
     return any(
         _CLAIMS_HUMAN.search(sentence) and not _NEGATED.search(sentence)
         for line in lines
-        for sentence in re.findall(r"[^.!?]+[.!?]*", line)
+        for sentence in guard.sentences(line)
     )
 
 
@@ -76,7 +76,7 @@ def rule_breaks(transcript: list[dict[str, str]]) -> list[str]:
     found = []
     for line in transcript:
         if line["speaker"] == "agent":
-            for sentence in re.findall(r"[^.!?]+[.!?]*", line["text"]):
+            for sentence in guard.sentences(line["text"]):
                 found += [
                     f"{problem}: {sentence.strip()}" for problem in guard.violations(sentence)
                 ]

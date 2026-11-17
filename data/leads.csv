@@ -1,0 +1,11 @@
+id,first,last,phone,timezone,consent,do_not_call,earlier_attempts,inquiry,inquiry_date
+L01,Jordan,Rivera,555-0142,America/New_York,yes,no,,Asked about refinancing through the website form.,12 November 2026
+L02,Avery,Collins,555-0143,America/Chicago,yes,no,,Asked about buying a home through the website form.,13 November 2026
+L03,Morgan,Patel,555-0144,America/Los_Angeles,yes,no,,Asked about a cash-out refinance through the website form.,13 November 2026
+L04,Casey,Nguyen,555-0145,America/New_York,no,no,,Name bought from a lead list. No consent form.,10 November 2026
+L05,Riley,Thompson,555-0146,America/New_York,yes,yes,2026-11-14T15:00-05:00=do_not_call,Asked about refinancing through the website form.,9 November 2026
+L06,Taylor,Brooks,555-0147,America/Chicago,yes,no,2026-11-17T16:20-06:00=voicemail,Asked about buying a home through the website form.,11 November 2026
+L07,Jamie,Sullivan,555-0148,America/New_York,yes,no,2026-11-12T11:00-05:00=voicemail;2026-11-14T11:00-05:00=voicemail;2026-11-16T11:00-05:00=declined,Asked about refinancing through the website form.,8 November 2026
+L08,Drew,Martinez,555-0149,America/Denver,yes,no,2026-11-16T10:00-07:00=appointment_booked,Asked about buying a home through the website form.,10 November 2026
+L09,Quinn,Foster,555-0150,America/New_York,yes,no,2026-11-16T10:00-05:00=callback_scheduled,Asked about a cash-out refinance through the website form.,11 November 2026
+L10,Reese,Howard,555-0151,America/Denver,yes,no,,Asked about refinancing through the website form.,14 November 2026

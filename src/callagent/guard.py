@@ -53,7 +53,11 @@ _PRESSURE = re.compile(
 )
 _NINE_DIGITS = re.compile(r"(?<!\d)(?:\d[\s\-.]?){9}(?!\d)")
 _ASIDE = re.compile(r"\[[^\]]*\]|\*[^*\n]+\*")  # [ends call], *pauses*
-_SENTENCE = re.compile(r"[^.!?]+[.!?]*\s*")
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")  # not the point in "6.25"
+
+
+def sentences(text: str) -> list[str]:
+    return [part for part in _SENTENCE_END.split(text.strip()) if part]
 
 
 def asks_to_stop(text: str) -> bool:
@@ -97,7 +101,7 @@ def withhold(text: str, fallback: str) -> tuple[str, list[str]]:
     spoken = _ASIDE.sub(" ", text)
     if spoken != text:
         problems.append("writes a stage direction")
-    for sentence in _SENTENCE.findall(spoken):
+    for sentence in sentences(spoken):
         found = violations(sentence)
         if found:
             problems += found

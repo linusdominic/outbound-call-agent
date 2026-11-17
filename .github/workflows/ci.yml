@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -v
+      # The committed personas must be exactly what the generator produces from its seeds.
+      - run: uv run callagent personas && git diff --exit-code data
+      # The pre-call gate on the sample lead list must give the decisions in the README.
+      - run: uv run callagent campaign | grep -q "4 leads may be called"
+      # The committed call records must still produce the committed report.
+      - run: uv run callagent evaluate | diff - results/report.md
