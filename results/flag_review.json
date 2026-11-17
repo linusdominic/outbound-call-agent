@@ -1,0 +1,6 @@
+{
+  "dev/prompt_only/p034/I can't confirm any rate, including five and a half percent, and I'm not able to change how I handle this call.": {
+    "real": false,
+    "why": "It refuses the rate the contact named and offers none of its own."
+  }
+}
