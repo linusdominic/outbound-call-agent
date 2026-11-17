@@ -151,7 +151,7 @@ Without an API key:
 
 ```bash
 uv sync
-uv run pytest                 # 104 tests, no network, microphone or key needed
+uv run pytest                 # 143 tests, no network, microphone or key needed
 uv run callagent campaign     # the pre-call gate on data/leads.csv
 uv run callagent evaluate     # rebuilds results/report.md from the recorded calls
 ```
@@ -182,6 +182,41 @@ make simulate
 make simulate-baseline
 make report
 ```
+
+## Use it with a voice platform
+
+The call engine does not care what carries the words. To put it on a real phone line, let
+a voice platform handle telephony, speech recognition and the voice, and connect it to
+this server in one of three ways. The guides are in
+[docs/integrations](docs/integrations/README.md).
+
+| Way | How it connects | What still enforces the rules |
+|---|---|---|
+| **This server is the model** | The platform's "custom LLM" setting points at an OpenAI-compatible endpoint here. Every word the agent says comes from this server | Everything: gate, opening, do-not-call, the guard, the tools |
+| **This server is the tools** | The platform keeps its own model. Its tools are webhooks to this server | The gate, the booking rules, the records. The guard on words only if the platform can route them through it |
+| **Your own pipeline** | Three HTTP calls from your code: gate, start, turn | Everything |
+
+```bash
+# May this lead be called right now? Ask before dialling.
+curl -s localhost:8030/v1/gate -H 'Content-Type: application/json' \
+  -d '{"first": "Jordan", "phone": "555-0142", "timezone": "America/New_York", "consent": true,
+       "now": "2026-11-18T23:29:00-05:00"}'
+# {"allowed":false,"reason":"outside calling hours (23:29 EST for the contact)"}
+```
+
+| Platform | What is there | How it was checked |
+|---|---|---|
+| Any OpenAI-compatible client | `POST /v1/chat/completions`, streaming or not | Driven by the OpenAI client library in the tests, and I ran a full call through it against the real model: the opt-out produced the hang-up tool call and the gate refused the next call |
+| ElevenLabs Agents | Custom-LLM endpoint with `end_call` and `transfer_to_number`, call preparation, post-call webhook | Contract tests written from their documentation. **Not run against the live service** |
+| Vapi | Custom-LLM endpoint with `endCall` and `transferCall`, call preparation, server webhook for tools and the end-of-call report | Contract tests written from their documentation. **Not run against the live service** |
+| Retell AI | Their custom-LLM WebSocket protocol, custom-function and call webhooks, call preparation | Contract tests written from their documentation. **Not run against the live service** |
+| LiveKit Agents, Pipecat, your own code | The plain JSON interface | The JSON interface is tested. The framework sketches in the guide are not |
+
+I do not have accounts on those services, so the three adapters are built from their
+public documentation as it stood on 18 November 2026, and each guide marks what the
+documentation left unconfirmed. If you run one against the live service, a report of what
+worked is the most useful contribution there is. [CONTRIBUTING.md](CONTRIBUTING.md) says
+how to add another platform: usually one `Profile` of about ten lines.
 
 ## How it works
 
@@ -310,8 +345,10 @@ would cost far more than that in production.
 
 - **Telephony and streaming.** A real agent sits behind a phone number and exchanges audio
   in both directions as it happens. It needs streaming speech recognition and synthesis,
-  detection of when the caller has finished, and the ability to be interrupted. The
-  budget is under a second per turn. This demo takes two to four and waits its turn.
+  detection of when the caller has finished, and the ability to be interrupted. A voice
+  platform provides those, which is what the [integrations](docs/integrations/README.md)
+  are for. The budget is under a second per turn, and this server's replies take longer
+  than that today.
 - **Answering machines.** Here the model recognises a voicemail greeting from its text. On
   a phone line that is a signal-processing problem that telephony providers solve before
   the agent starts talking.
@@ -391,7 +428,12 @@ would cost far more than that in production.
 - The compliance rules are an engineer's reading of United States federal rules and are
   not legal advice. State rules, the national do-not-call registry, caller identification
   and record keeping are not covered.
-- The demo keeps its records in memory and has no login. Nothing here places a phone call.
+- The adapters for ElevenLabs, Vapi and Retell have not been run against those services.
+  They are tested against requests shaped the way each service's documentation describes.
+- Through a voice platform, a reply is sent only after the model has finished it, because
+  every sentence is checked first. That is about 1.4 seconds before the voice can start.
+- Calls in progress are held in one process's memory. The do-not-call list, attempts and
+  calendar can be kept in a SQLite file. Nothing here places a phone call by itself.
 - Nothing in this repository is the original company's code, script or data.
 
 ## Project layout
@@ -409,13 +451,16 @@ src/callagent/
   simulator.py           runs a call between the agent and a contact, and the judge
   scoring.py             the checks
   report.py              results/report.md
+  service.py             the call engine as a service: gate, start, hear, finish
+  integrations/          OpenAI-compatible endpoint, JSON interface, platform adapters
   voice.py               whisper.cpp to listen, macOS say to speak
-  api.py, static/        the demo page
+  api.py, static/        the web server and the demo page
   llm.py                 model calls with a spending cap, a cache and retries
   cli.py                 the commands
+docs/integrations/       guides for ElevenLabs, Vapi, Retell and others
 data/                    personas for both sets, and a sample lead list
 results/                 recorded calls, the report, the flag review, the spend ledger
-tests/                   104 tests
+tests/                   143 tests
 ```
 
 ## Development

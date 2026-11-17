@@ -4,7 +4,7 @@ callagent personas     build the simulated contacts for both sets (free)
 callagent simulate     run every persona's call against the agent (paid)
 callagent evaluate     score the recorded calls against the personas (free)
 callagent campaign     show which leads on a list may be called right now (free)
-callagent serve        the page for talking to the agent
+callagent serve        the demo page, and the /v1 endpoints for voice platforms
 
 simulate, evaluate and serve take --set heldout (the default) or --set dev.
 """
@@ -121,7 +121,7 @@ def cmd_campaign(args: argparse.Namespace) -> None:
 def cmd_serve(args: argparse.Namespace) -> None:
     import uvicorn
 
-    uvicorn.run("callagent.api:app", host="127.0.0.1", port=args.port)
+    uvicorn.run("callagent.api:app", host=args.host, port=args.port)
 
 
 def main() -> None:
@@ -157,6 +157,9 @@ def main() -> None:
 
     serving = commands.add_parser("serve", help="talk to the agent in a browser")
     serving.add_argument("--port", type=int, default=8030)
+    serving.add_argument(
+        "--host", default="127.0.0.1", help="0.0.0.0 to be reachable by a voice platform"
+    )
     serving.set_defaults(func=cmd_serve)
 
     args = parser.parse_args()

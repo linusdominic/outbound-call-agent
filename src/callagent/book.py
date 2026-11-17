@@ -57,7 +57,8 @@ def business_days(start: datetime, count: int) -> list[datetime]:
 
 class Book:
     def __init__(self, path: Path | str = ":memory:") -> None:
-        self.db = sqlite3.connect(str(path))
+        # One connection, used from whichever thread the web server runs a request on.
+        self.db = sqlite3.connect(str(path), check_same_thread=False)
         self.db.executescript(SCHEMA)
 
     # Do-not-call list

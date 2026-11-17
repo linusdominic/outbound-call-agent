@@ -1,14 +1,16 @@
-"""The demo page: be the contact, by voice or by typing, and watch what the agent records.
+"""The web server: the demo page, and the endpoints other voice systems connect to.
 
-Calls placed here share one set of records for as long as the server runs. Ask not to be
-called, start another call, and the pre-call check refuses it.
+The demo page lets you be the contact, by voice or by typing. Calls placed there share one
+set of records for as long as the server runs: ask not to be called, start another call,
+and the pre-call check refuses it.
+
+The endpoints under ``/v1`` are for third-party voice platforms. They are described in
+``docs/integrations``.
 """
 
 import asyncio
 import os
 import time
-import uuid
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -17,12 +19,12 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from callagent import voice
-from callagent.agent import Call, Reply
-from callagent.book import Book, Lead, business_days, slot_label
-from callagent.gate import may_call
+from callagent.agent import Reply
+from callagent.book import Book, Lead, slot_label
 from callagent.llm import LLM
-from callagent.personas import NOW, SLOT_TIMES
+from callagent.personas import NOW
 from callagent.playbook import ROOT, Playbook
+from callagent.service import CallService, Refused, UnknownCall, load_leads
 
 STATIC = Path(__file__).parent / "static"
 
@@ -34,12 +36,6 @@ class NewCall(BaseModel):
 
 class Said(BaseModel):
     text: str
-
-
-@dataclass
-class Session:
-    call: Call
-    clips: list[bytes] = field(default_factory=list)
 
 
 def demo_lead(first: str) -> Lead:
@@ -58,38 +54,52 @@ def demo_lead(first: str) -> Lead:
 def create_app(llm: LLM | None = None, speak=voice.speak, transcribe=voice.transcribe) -> FastAPI:
     app = FastAPI(title="Outbound call agent", docs_url=None, redoc_url=None)
     playbook = Playbook.load()
-    state: dict[str, Any] = {"book": None, "sessions": {}, "llm": llm}
+    made: dict[str, LLM] = {}
 
     def model_client() -> LLM:
-        if state["llm"] is None:  # made on first use, so the page loads without an API key
-            state["llm"] = LLM(
+        if "llm" not in made:  # made on first use, so the page loads without an API key
+            made["llm"] = llm or LLM(
                 ledger_path=ROOT / "results" / "app_spend.json",
                 budget_usd=float(os.environ.get("CALLAGENT_APP_BUDGET", "1.0")),
             )
-        return state["llm"]
+        return made["llm"]
 
-    def book() -> Book:
-        if state["book"] is None:
-            state["book"] = Book()
-            days = business_days(NOW, 3)
-            state["book"].open_slots([f"{d:%Y-%m-%d}T{t}" for d in days for t in SLOT_TIMES])
-        return state["book"]
+    # The demo always runs at the evaluation's fixed time, so the gate never says "too late".
+    demo = CallService(playbook, model_client, clock=lambda: NOW.replace(tzinfo=demo_lead("").tz))
+    clips: dict[str, list[bytes]] = {}
 
-    def session(call_id: str) -> Session:
-        if call_id not in state["sessions"]:
-            raise HTTPException(404, "No such call")
-        return state["sessions"][call_id]
+    # Third-party platforms get real time, records that can outlive the process, and a lead list.
+    leads_file = os.environ.get("CALLAGENT_LEADS")
+    live = CallService(
+        playbook,
+        model_client,
+        book=Book(os.environ.get("CALLAGENT_DB", ":memory:")),
+        leads=load_leads(Path(leads_file)) if leads_file else {},
+        model=os.environ.get("CALLAGENT_MODEL", "claude-haiku-5-5"),
+    )
+    app.state.service = live
+    from callagent.integrations import routers
 
-    async def answer(call_id: str, found: Session, reply: Reply, heard: str | None, stt: float):
+    for router in routers(live, os.environ.get("CALLAGENT_API_KEY")):
+        app.include_router(router)
+
+    def session(call_id: str):
+        try:
+            return demo.session(call_id)
+        except UnknownCall:
+            raise HTTPException(404, "No such call") from None
+
+    async def answer(call_id: str, reply: Reply, heard: str | None, stt: float) -> dict[str, Any]:
         clip, tts = None, 0.0
         if voice.available()["speak"]:
             started = time.perf_counter()
-            found.clips.append(await asyncio.to_thread(speak, reply.text))
+            clips.setdefault(call_id, []).append(await asyncio.to_thread(speak, reply.text))
             tts = time.perf_counter() - started
-            clip = f"/api/calls/{call_id}/clips/{len(found.clips) - 1}"
-        call = found.call
+            clip = f"/api/calls/{call_id}/clips/{len(clips[call_id]) - 1}"
+        call = demo.session(call_id).call
         if reply.ended:
-            book().record_attempt(call.lead.id, call.state.now, call.state.outcome)
+            demo.finish(call_id)
+        seconds = {"listen": stt, "think": reply.latency_s, "speak": tts}
         return {
             "call_id": call_id,
             "heard": heard,
@@ -97,11 +107,7 @@ def create_app(llm: LLM | None = None, speak=voice.speak, transcribe=voice.trans
             "clip": clip,
             "ended": reply.ended,
             "withheld": reply.withheld,
-            "seconds": {
-                "listen": round(stt, 2),
-                "think": round(reply.latency_s, 2),
-                "speak": round(tts, 2),
-            },
+            "seconds": {key: round(value, 2) for key, value in seconds.items()},
             "state": {
                 "outcome": call.state.outcome if reply.ended else None,
                 "answers": call.state.answers,
@@ -132,35 +138,24 @@ def create_app(llm: LLM | None = None, speak=voice.speak, transcribe=voice.trans
     async def start(body: NewCall) -> dict:
         if body.mode not in ("guarded", "prompt_only"):
             raise HTTPException(422, "mode must be guarded or prompt_only")
-        lead = demo_lead(body.first)
-        now = NOW.replace(tzinfo=lead.tz)
-        decision = may_call(lead, now, book(), playbook)
-        if not decision.allowed:
-            return {"allowed": False, "reason": decision.reason}
-        call = Call(model_client(), playbook, lead, book(), now, mode=body.mode)
-        call_id = uuid.uuid4().hex[:12]
-        found = state["sessions"][call_id] = Session(call)
-        reply = await call.open()
-        return {
-            "allowed": True,
-            "reason": decision.reason,
-            **await answer(call_id, found, reply, None, 0.0),
-        }
+        try:
+            call_id, reply = await demo.start(demo_lead(body.first), mode=body.mode)
+        except Refused as refusal:
+            return {"allowed": False, "reason": refusal.reason}
+        return {"allowed": True, "reason": "ok", **await answer(call_id, reply, None, 0.0)}
 
     @app.post("/api/calls/{call_id}/say")
     async def say(call_id: str, body: Said) -> dict:
-        found = session(call_id)
-        if found.call.ended:
+        if session(call_id).call.ended:
             raise HTTPException(409, "The call has ended")
         if not body.text.strip():
             raise HTTPException(422, "Nothing was said")
-        reply = await found.call.hear(body.text.strip())
-        return await answer(call_id, found, reply, body.text.strip(), 0.0)
+        reply = await demo.hear(call_id, body.text.strip())
+        return await answer(call_id, reply, body.text.strip(), 0.0)
 
     @app.post("/api/calls/{call_id}/audio")
     async def audio(call_id: str, request: Request) -> dict:
-        found = session(call_id)
-        if found.call.ended:
+        if session(call_id).call.ended:
             raise HTTPException(409, "The call has ended")
         if not voice.available()["listen"]:
             raise HTTPException(503, "Speech recognition is not set up. Type instead.")
@@ -169,19 +164,19 @@ def create_app(llm: LLM | None = None, speak=voice.speak, transcribe=voice.trans
         stt = time.perf_counter() - started
         if not heard:
             return {"call_id": call_id, "heard": "", "reply": None, "ended": False}
-        reply = await found.call.hear(heard)
-        return await answer(call_id, found, reply, heard, stt)
+        return await answer(call_id, await demo.hear(call_id, heard), heard, stt)
 
     @app.get("/api/calls/{call_id}/clips/{number}")
     def clip(call_id: str, number: int) -> Response:
-        clips = session(call_id).clips
-        if not 0 <= number < len(clips):
+        session(call_id)
+        if not 0 <= number < len(clips.get(call_id, [])):
             raise HTTPException(404, "No such clip")
-        return Response(clips[number], media_type="audio/wav")
+        return Response(clips[call_id][number], media_type="audio/wav")
 
     @app.post("/api/reset")
     def reset() -> dict:
-        state["book"], state["sessions"] = None, {}
+        demo.book, demo.sessions = Book(), {}
+        clips.clear()
         return {"ok": True}
 
     return app

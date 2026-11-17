@@ -26,6 +26,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "openai>=3.53.0",
     "pytest>=9.2.0",
     "pytest-asyncio>=1.5.0",
     "ruff>=0.17.5",
@@ -49,3 +50,4 @@ ignore = ["B008"]
 "tests/*" = ["E501"]
 "src/callagent/personas.py" = ["E501"]  # the phrase bank reads better one line per phrasing
 "src/callagent/guard.py" = ["E501"]  # so do the patterns
+"src/callagent/integrations/platforms.py" = ["E501"]  # request shapes read better unwrapped

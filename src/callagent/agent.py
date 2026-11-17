@@ -152,6 +152,11 @@ class Call:
     def ended(self) -> bool:
         return self.state.finished or self.agent_turns >= MAX_AGENT_TURNS
 
+    @property
+    def context(self) -> str:
+        """The facts of this call that the model is given: the lead, the time, the open times."""
+        return call_context(self.lead, self.state.now, self.book)
+
     async def open(self) -> Reply:
         """The first words of the call."""
         if self.mode == "guarded":
