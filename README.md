@@ -10,6 +10,11 @@ try to talk it into breaking them.
 
 ![The demo page: a call in which the contact asks for a rate, is refused, answers the questions and books a time](docs/screenshot.jpg)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
+  <img alt="Architecture: a lead list goes through the pre-call gate (gate.py: do-not-call list, consent, local hours, attempts). Allowed calls start with a fixed opening line from playbook.yml. In the call, a guard checks what the contact says, the model with six tools replies, tools.py validates every action, and a second guard checks what the agent is about to say. Tools write to the records in book.py, which feed the gate for the next call." src="docs/img/architecture-light.svg">
+</picture>
+
 It is a portfolio project. It places no real phone calls, the contacts are simulated, and
 it has not been deployed anywhere. Every number below comes from a run on my machine on
 18 November 2026, and the command that reproduces it is next to it.
@@ -71,6 +76,11 @@ Measured on 200 held-out simulated contacts, generated and called after the prom
 guard patterns and the scoring were frozen. The agent and the contacts are both
 `claude-haiku-5-5`. Reproduce with `make report`; the full report is
 [results/report.md](results/report.md).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/results-dark.svg">
+  <img alt="Held-out results on 200 simulated contacts, one run each, rules in code against rules in the prompt only: every check passed 199 of 200 against 193 of 200; no stage directions read aloud 200 of 200 against 193 of 200; approved voicemail only 8 of 8 against 6 of 8; answers saved correctly 87 of 88 against 88 of 88; no rate, promise or pressure 200 of 200 for both; stop request honoured 20 of 20 for both. The difference is not statistically established, exact McNemar p = 0.07." src="docs/img/results-light.svg">
+</picture>
 
 | Check, counted on the calls it applies to | Rules enforced in code | Rules in the prompt only |
 |---|---|---|

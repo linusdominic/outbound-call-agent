@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="451" viewBox="0 0 860 451" role="img" aria-label="Held-out calls: rules in code against rules in the prompt only">
+  <title>Held-out calls: rules in code against rules in the prompt only</title>
+  <rect x="0.5" y="0.5" width="859" height="450" rx="12" fill="#0d1117" stroke="#30363d"/>
+  <text x="28.0" y="40.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#f0f6fc" text-anchor="start">Held-out calls: rules in code against rules in the prompt only</text>
+  <text x="28.0" y="60.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start">200 simulated contacts, agent and contacts both claude-haiku-5-5, one run each. Each check is counted on the calls it applies to.</text>
+  <text x="28.0" y="80.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start">The overall difference is not statistically established (exact McNemar p = 0.07).</text>
+  <rect x="28.0" y="96.0" width="12" height="12" rx="3" fill="#3987e5"/>
+  <text x="46.0" y="106.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start">Rules enforced in code</text>
+  <rect x="210.3" y="96.0" width="12" height="12" rx="3" fill="#d95926"/>
+  <text x="228.3" y="106.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#9198a1" text-anchor="start">Rules in the prompt only</text>
+  <text x="221.5" y="147.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">Every check passed</text>
+  <path d="M235.5,128.0 H750.4 Q754.4,128.0 754.4,132.0 V138.0 Q754.4,142.0 750.4,142.0 H235.5 Z" fill="#3987e5"/>
+  <text x="762.4" y="139.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">199 of 200</text>
+  <path d="M235.5,144.0 H734.8 Q738.8,144.0 738.8,148.0 V154.0 Q738.8,158.0 734.8,158.0 H235.5 Z" fill="#d95926"/>
+  <text x="746.8" y="155.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">193 of 200</text>
+  <text x="221.5" y="195.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">No stage directions read aloud</text>
+  <path d="M235.5,176.0 H753.0 Q757.0,176.0 757.0,180.0 V186.0 Q757.0,190.0 753.0,190.0 H235.5 Z" fill="#3987e5"/>
+  <text x="765.0" y="187.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">200 of 200</text>
+  <path d="M235.5,192.0 H734.8 Q738.8,192.0 738.8,196.0 V202.0 Q738.8,206.0 734.8,206.0 H235.5 Z" fill="#d95926"/>
+  <text x="746.8" y="203.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">193 of 200</text>
+  <text x="221.5" y="243.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">Approved voicemail only</text>
+  <path d="M235.5,224.0 H753.0 Q757.0,224.0 757.0,228.0 V234.0 Q757.0,238.0 753.0,238.0 H235.5 Z" fill="#3987e5"/>
+  <text x="765.0" y="235.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">8 of 8</text>
+  <path d="M235.5,240.0 H622.7 Q626.7,240.0 626.7,244.0 V250.0 Q626.7,254.0 622.7,254.0 H235.5 Z" fill="#d95926"/>
+  <text x="634.7" y="251.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">6 of 8</text>
+  <text x="221.5" y="291.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">Answers saved correctly</text>
+  <path d="M235.5,272.0 H747.3 Q751.3,272.0 751.3,276.0 V282.0 Q751.3,286.0 747.3,286.0 H235.5 Z" fill="#3987e5"/>
+  <text x="759.3" y="283.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">87 of 88</text>
+  <path d="M235.5,288.0 H753.0 Q757.0,288.0 757.0,292.0 V298.0 Q757.0,302.0 753.0,302.0 H235.5 Z" fill="#d95926"/>
+  <text x="765.0" y="299.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">88 of 88</text>
+  <text x="221.5" y="339.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">No rate, promise or pressure</text>
+  <path d="M235.5,320.0 H753.0 Q757.0,320.0 757.0,324.0 V330.0 Q757.0,334.0 753.0,334.0 H235.5 Z" fill="#3987e5"/>
+  <text x="765.0" y="331.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">200 of 200</text>
+  <path d="M235.5,336.0 H753.0 Q757.0,336.0 757.0,340.0 V346.0 Q757.0,350.0 753.0,350.0 H235.5 Z" fill="#d95926"/>
+  <text x="765.0" y="347.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">200 of 200</text>
+  <text x="221.5" y="387.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#f0f6fc" text-anchor="end">Stop request honoured at once</text>
+  <path d="M235.5,368.0 H753.0 Q757.0,368.0 757.0,372.0 V378.0 Q757.0,382.0 753.0,382.0 H235.5 Z" fill="#3987e5"/>
+  <text x="765.0" y="379.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">20 of 20</text>
+  <path d="M235.5,384.0 H753.0 Q757.0,384.0 757.0,388.0 V394.0 Q757.0,398.0 753.0,398.0 H235.5 Z" fill="#d95926"/>
+  <text x="765.0" y="395.5" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9198a1" text-anchor="start">20 of 20</text>
+  <line x1="235.5" y1="122.0" x2="235.5" y2="404.0" stroke="#3d444d"/>
+  <text x="28.0" y="429.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#757e8a" text-anchor="start">Source: results/report.md (held-out set), built from results/heldout/calls.*.jsonl. Contacts are simulated, in text.</text>
+</svg>
