@@ -163,7 +163,7 @@ Without an API key:
 uv sync
 uv run pytest                 # 143 tests, no network, microphone or key needed
 uv run callagent campaign     # the pre-call gate on data/leads.csv
-uv run callagent evaluate     # rebuilds results/report.md from the recorded calls
+make report                   # rebuilds results/report.md from the recorded calls
 ```
 
 To talk to the agent:
